@@ -40,6 +40,13 @@ jobs:
     needs:
       - diagnostics
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        architecture:
+          # The CDM Nessus agent does not support ARM64 on Debian.
+          # - arm64
+          - x86_64
     steps:
       - id: harden-runner
         name: Harden the runner
@@ -129,7 +136,8 @@ jobs:
           # it can take almost an hour to create this AMI.
           AWS_MAX_ATTEMPTS: 360
         run: |
-          packer build -timestamp-ui \
+          packer build -only amazon-ebs.${{ matrix.architecture }} \
+            -timestamp-ui \
             -var build_bucket=${{ secrets.THIRD_PARTY_BUCKET_PRODUCTION }} \
             -var is_prerelease=${{ github.event.release.prerelease }} \
             -var release_tag=${{ github.event.release.tag_name }} \
